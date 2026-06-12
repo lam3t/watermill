@@ -507,11 +507,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const svgEl = kioskContainerHolder.querySelector('svg');
             if (svgEl) {
                 if (item.sizeVal === 1) {
-                    svgEl.style.height = '110px';
+                    svgEl.style.height = '75px';
                 } else if (item.sizeVal === 3) {
-                    svgEl.style.height = '130px';
+                    svgEl.style.height = '90px';
                 } else {
-                    svgEl.style.height = '165px';
+                    svgEl.style.height = '115px';
                 }
                 svgEl.classList.add('bottle-kiosk-svg');
             }
@@ -851,13 +851,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const nozzleY = 35;
 
         // Container sizing parameters
-        let containerH = 120;
+        let containerH = 85;
         let containerW = 75;
         if (STATE.sizeVal === 3) {
-            containerH = 100;
+            containerH = 70;
             containerW = 65;
         } else if (STATE.sizeVal === 1) {
-            containerH = 80;
+            containerH = 55;
             containerW = 55;
         }
 
@@ -890,7 +890,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 ctx.save();
                 ctx.beginPath();
-                ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
+                const neckHeight = STATE.sizeVal === 5 ? 15 : (STATE.sizeVal === 3 ? 10 : 8);
+                ctx.roundRect(containerX, containerY + neckHeight, containerW, containerH - neckHeight, 6);
                 ctx.clip();
 
                 ctx.beginPath();
@@ -978,7 +979,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 ctx.save();
                 ctx.beginPath();
-                ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
+                const neckHeight = STATE.sizeVal === 5 ? 15 : (STATE.sizeVal === 3 ? 10 : 8);
+                ctx.roundRect(containerX, containerY + neckHeight, containerW, containerH - neckHeight, 6);
                 ctx.clip();
 
                 // Animate and draw falling and stacking ice cubes

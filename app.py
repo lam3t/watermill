@@ -49,6 +49,6 @@ if os.path.exists(html_path) and os.path.exists(css_path) and os.path.exists(js_
     html_content = re.sub(r'<script src="app\.js"></script>', f'<script>{js_content}</script>', html_content)
 
     # Render standalone simulator component
-    components.html(html_content, height=880, scrolling=True)
+    components.html(html_content, height=760, scrolling=True)
 else:
     st.error("Required simulator source files (index.html, styles.css, app.js) are missing from the app path.")
