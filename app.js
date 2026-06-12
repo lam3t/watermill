@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         amountPaid: 0.00,
         isHygieneNoticeRead: false,
         isVending: false,
+        vendingProgress: 0,   // Real-time progress (0 to 100)
         audioContext: null    // Lazy initialized
     };
 
@@ -390,6 +391,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function updateCreditDisplay() {
+        const creditEl = document.getElementById('header-credit-display');
+        if (creditEl) {
+            creditEl.textContent = `CREDIT: $${STATE.amountPaid.toFixed(2)}`;
+            if (STATE.amountPaid > 0) {
+                creditEl.classList.add('has-credit');
+            } else {
+                creditEl.classList.remove('has-credit');
+            }
+        }
+    }
+
     function resetOrderState() {
         STATE.product = null;
         STATE.size = null;
@@ -398,6 +411,10 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.totalPrice = 0;
         STATE.amountPaid = 0;
         STATE.isVending = false;
+        STATE.vendingProgress = 0;
+
+        // Update persistent credit display
+        updateCreditDisplay();
 
         // Clear kiosk cabinet graphics
         kioskContainerHolder.innerHTML = `
@@ -503,40 +520,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- CURRENCY INLET EVENT HANDLERS (HARDWARE MODELLER) ---
-    function handleInsertMoney(amount) {
-        if (STATE.isVending || STATE.currentScreen !== 'screen-payment') return;
+    function animateInsertCurrency(sourceElement, targetElement, type, amount, callback) {
+        if (STATE.isVending) return;
         
-        initAudio();
-        playCoinSound();
-        STATE.amountPaid += amount;
-        updatePaymentScreenBalance();
+        const srcRect = sourceElement.getBoundingClientRect();
+        const destRect = targetElement.getBoundingClientRect();
+
+        // Create moving clone element
+        const clone = document.createElement('div');
+        if (type === 'coin') {
+            clone.className = 'moving-coin-particle';
+            clone.textContent = '25¢';
+            clone.style.width = '35px';
+            clone.style.height = '35px';
+        } else if (type === 'bill') {
+            clone.className = 'moving-bill-particle';
+            clone.textContent = amount === 1.00 ? '$1' : '$5';
+            clone.style.width = '60px';
+            clone.style.height = '30px';
+        } else {
+            clone.className = 'moving-card-particle';
+            clone.textContent = '💳';
+            clone.style.width = '55px';
+            clone.style.height = '35px';
+        }
+
+        clone.style.left = `${srcRect.left + window.scrollX}px`;
+        clone.style.top = `${srcRect.top + window.scrollY}px`;
+
+        document.body.appendChild(clone);
+
+        // Force reflow
+        clone.offsetHeight;
+
+        // Calculate translation
+        const tx = destRect.left - srcRect.left + (destRect.width - (type === 'coin' ? 35 : (type === 'bill' ? 60 : 55)))/2;
+        const ty = destRect.top - srcRect.top + (destRect.height - (type === 'coin' ? 35 : (type === 'bill' ? 30 : 35)))/2;
+
+        clone.style.transform = `translate(${tx}px, ${ty}px) scale(0.3)`;
+        clone.style.opacity = '0';
+
+        // Remove after transition
+        setTimeout(() => {
+            clone.remove();
+            callback();
+        }, 600);
     }
 
-    btnInsertQuarter.addEventListener('click', () => handleInsertMoney(0.25));
-    btnInsertDollar1.addEventListener('click', () => handleInsertMoney(1.00));
-    btnInsertDollar5.addEventListener('click', () => handleInsertMoney(5.00));
+    const slotCoin = document.getElementById('slot-coin');
+    const slotBill = document.getElementById('slot-bill');
+    const slotCard = document.getElementById('slot-card');
+
+    btnInsertQuarter.addEventListener('click', (e) => {
+        animateInsertCurrency(e.currentTarget, slotCoin, 'coin', 0.25, () => {
+            initAudio();
+            playCoinSound();
+            STATE.amountPaid += 0.25;
+            updateCreditDisplay();
+            if (STATE.currentScreen === 'screen-payment') {
+                updatePaymentScreenBalance();
+            }
+        });
+    });
+
+    btnInsertDollar1.addEventListener('click', (e) => {
+        animateInsertCurrency(e.currentTarget, slotBill, 'bill', 1.00, () => {
+            initAudio();
+            playCoinSound();
+            STATE.amountPaid += 1.00;
+            updateCreditDisplay();
+            if (STATE.currentScreen === 'screen-payment') {
+                updatePaymentScreenBalance();
+            }
+        });
+    });
+
+    btnInsertDollar5.addEventListener('click', (e) => {
+        animateInsertCurrency(e.currentTarget, slotBill, 'bill', 5.00, () => {
+            initAudio();
+            playCoinSound();
+            STATE.amountPaid += 5.00;
+            updateCreditDisplay();
+            if (STATE.currentScreen === 'screen-payment') {
+                updatePaymentScreenBalance();
+            }
+        });
+    });
     
-    btnSwipeCard.addEventListener('click', () => {
-        if (STATE.isVending || STATE.currentScreen !== 'screen-payment') return;
-        
-        initAudio();
-        playCardSwipeSound();
-        // Fully satisfy balance instantly
-        STATE.amountPaid = STATE.totalPrice;
-        updatePaymentScreenBalance();
+    btnSwipeCard.addEventListener('click', (e) => {
+        if (STATE.currentScreen !== 'screen-payment') return;
+        animateInsertCurrency(e.currentTarget, slotCard, 'card', 0, () => {
+            initAudio();
+            playCardSwipeSound();
+            STATE.amountPaid = STATE.totalPrice;
+            updateCreditDisplay();
+            updatePaymentScreenBalance();
+        });
     });
 
     btnRefund.addEventListener('click', () => {
-        if (STATE.isVending || STATE.currentScreen !== 'screen-payment') return;
+        if (STATE.isVending) return;
         if (STATE.amountPaid === 0) return;
 
         initAudio();
-        playCoinSound(); // plays a metallic audio signal for drop
+        playCoinSound();
         setTimeout(playCoinSound, 80);
         setTimeout(playCoinSound, 160);
 
         STATE.amountPaid = 0.00;
-        updatePaymentScreenBalance();
+        updateCreditDisplay();
+        if (STATE.currentScreen === 'screen-payment') {
+            updatePaymentScreenBalance();
+        }
     });
 
 
@@ -559,17 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCloseHygiene.addEventListener('click', () => {
         STATE.isHygieneNoticeRead = true;
         hygienePopup.classList.remove('active');
-    });
-
-            STATE.size = size;
-            STATE.spigot = spigot;
-            STATE.totalPrice = size * STATE.pricePerGallon;
-
-            // Instantly render bottle on left panel
-            placeContainerInKiosk(size, spigot);
-
-            navigateTo('screen-payment');
-        });
     });
 
     // Back triggers
@@ -624,7 +708,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Main Canvas animation for Step 5 / Freezer
-    function animateRoOrFreezer(vendingProgress) {
+    function animateRoOrFreezer() {
+        const vendingProgress = STATE.vendingProgress || 0;
         const ctx = canvasRo.getContext('2d');
         const width = canvasRo.width;
         const height = canvasRo.height;
@@ -736,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        roAnimationId = requestAnimationFrame(() => animateRoOrFreezer(vendingProgress));
+        roAnimationId = requestAnimationFrame(animateRoOrFreezer);
     }
 
 
@@ -754,7 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Creates rising water splash or falling ice blocks inside kiosk bay
-    function updateAndDrawVendingFluid(vendingProgress) {
+    function updateAndDrawVendingFluid() {
+        const vendingProgress = STATE.vendingProgress || 0;
         const ctx = canvasVendFluid.getContext('2d');
         const w = canvasVendFluid.width;
         const h = canvasVendFluid.height;
@@ -943,11 +1029,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        vendAnimationId = requestAnimationFrame(() => updateAndDrawVendingFluid(vendingProgress));
+        vendAnimationId = requestAnimationFrame(updateAndDrawVendingFluid);
     }
 
     // --- SEQUENCER LOOP FOR STEP 4 ACTIVE STATE ---
     function startVendingSequence() {
+        STATE.vendingProgress = 0;
         let progress = 0;
         vendingProgressFill.style.width = '0%';
         vendingProgressPercent.textContent = '0%';
@@ -956,10 +1043,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ledFailsafe.className = 'led-light led-green flashing';
 
         initRoSimulation();
-        animateRoOrFreezer(progress);
+        animateRoOrFreezer();
 
         initDispenserSimulation();
-        updateAndDrawVendingFluid(progress);
+        updateAndDrawVendingFluid();
 
         const duration = 10000;
         const intervalTime = 100;
@@ -974,6 +1061,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 progress = 100;
                 clearInterval(interval);
             }
+
+            STATE.vendingProgress = progress;
 
             vendingProgressFill.style.width = `${progress}%`;
             vendingProgressPercent.textContent = `${Math.round(progress)}%`;

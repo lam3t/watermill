@@ -28,6 +28,7 @@
                 </div>
             </div>
             <div class="header-status">
+                <div class="header-credit" id="header-credit-display">CREDIT: $0.00</div>
                 <span class="system-ok-pulse"></span> SYSTEM: ONLINE
             </div>
         </header>
@@ -73,40 +74,67 @@
                         </div>
                     </div>
 
-                    <!-- Physical Inputs: Coins / Bills / Card Swipe -->
-                    <div class="payment-hardware">
-                        <h3>Simulated Cash & Card Inputs</h3>
-                        <p class="hardware-hint">Click below to simulate inserting currency or swiping your card</p>
-                        
-                        <div class="coin-acceptor">
-                            <span class="hardware-label">COIN SLOT (Quarters Only)</span>
-                            <button class="hardware-btn coin-btn" id="btn-insert-quarter" title="Insert $0.25">
-                                <span class="coin-icon">25¢</span> Quarter ($0.25)
-                            </button>
+                    <!-- Physical Slots on Cabinet -->
+                    <div class="physical-slots-panel">
+                        <!-- Coin slot slot -->
+                        <div class="physical-slot coin-slot" id="slot-coin">
+                            <div class="slot-opening-vertical"></div>
+                            <span class="slot-text">COIN SLOT</span>
                         </div>
+                        <!-- Bill acceptor slot -->
+                        <div class="physical-slot bill-slot" id="slot-bill">
+                            <div class="slot-opening-horizontal"></div>
+                            <span class="slot-text">BILL INSERT</span>
+                        </div>
+                        <!-- Card swipe slot -->
+                        <div class="physical-slot card-slot" id="slot-card">
+                            <div class="slot-opening-card"></div>
+                            <span class="slot-text">CARD READER</span>
+                        </div>
+                    </div>
+
+                    <!-- Physical Inputs: Coins / Bills / Card Swipe (User's Wallet Panel) -->
+                    <div class="payment-hardware">
+                        <h3>Your Wallet & Cash Drawer</h3>
+                        <p class="hardware-hint">Click coins or bills to visually slide them into the machine slots above</p>
                         
-                        <div class="bill-acceptor">
-                            <span class="hardware-label">BILL ACCEPTOR ($1.00 & $5.00)</span>
-                            <div class="bill-row">
-                                <button class="hardware-btn bill-btn" id="btn-insert-dollar1" title="Insert $1.00">
-                                    <span class="bill-icon">$1</span> $1.00 Bill
-                                </button>
-                                <button class="hardware-btn bill-btn" id="btn-insert-dollar5" title="Insert $5.00">
-                                    <span class="bill-icon">$5</span> $5.00 Bill
+                        <div class="wallet-contents">
+                            <!-- Quarters -->
+                            <div class="wallet-section">
+                                <span class="hardware-label">QUARTERS (25¢)</span>
+                                <div class="coin-stack">
+                                    <button class="wallet-coin-btn" id="btn-insert-quarter" title="Insert Quarter ($0.25)">
+                                        <span class="coin-emboss">25¢</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Paper Bills -->
+                            <div class="wallet-section">
+                                <span class="hardware-label">PAPER BILLS ($1 / $5)</span>
+                                <div class="bill-stack">
+                                    <button class="wallet-bill-btn bill-one" id="btn-insert-dollar1" title="Insert $1.00 Bill">
+                                        <span class="bill-label">$1</span>
+                                    </button>
+                                    <button class="wallet-bill-btn bill-five" id="btn-insert-dollar5" title="Insert $5.00 Bill">
+                                        <span class="bill-label">$5</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Cards -->
+                            <div class="wallet-section">
+                                <span class="hardware-label">CARDS</span>
+                                <button class="wallet-card-btn" id="btn-swipe-card" title="Swipe Card">
+                                    <span class="card-logo">CREDIT CARD</span>
+                                    <span class="card-chip"></span>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="card-reader">
-                            <span class="hardware-label">CREDIT / DEBIT READER</span>
-                            <button class="hardware-btn card-btn" id="btn-swipe-card">
-                                <span class="card-icon">💳</span> Swipe Debit/Credit Card
-                            </button>
-                        </div>
-
                         <div class="refund-lever-container">
                             <button class="refund-btn" id="btn-refund">
-                                🪙 Return Inserted Cash
+                                🪙 Press Coin Return Lever
                             </button>
                         </div>
                     </div>
@@ -299,8 +327,8 @@
                                 <!-- 12-Step Perfection & Reverse Osmosis animation -->
                                 <div class="perfection-program-panel">
                                     <div class="section-title">
-                                        <span class="step-num">Step 5</span>
-                                        <h3>Reverse Osmosis Filtration (RO)</h3>
+                                        <span class="step-num" id="vending-step-tag">Step 5</span>
+                                        <h3 id="vending-step-title">Reverse Osmosis Filtration (RO)</h3>
                                     </div>
                                     <div class="ro-visualization">
                                         <!-- RO filter canvas particle stream -->

@@ -99,7 +99,7 @@ body {
 .header-status {
     background: rgba(0, 168, 89, 0.15);
     border: 1px solid var(--color-primary-green);
-    padding: 6px 12px;
+    padding: 6px 16px;
     border-radius: 50px;
     font-size: 12px;
     font-weight: 600;
@@ -107,6 +107,26 @@ body {
     align-items: center;
     gap: 8px;
     letter-spacing: 1px;
+}
+
+.header-credit {
+    font-family: var(--font-heading);
+    color: var(--color-accent-cyan);
+    font-weight: 800;
+    margin-right: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    padding-right: 12px;
+    transition: all 0.3s ease;
+}
+
+.header-credit.has-credit {
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+    animation: creditPulse 1s infinite alternate;
+}
+
+@keyframes creditPulse {
+    0% { color: var(--color-accent-cyan); transform: scale(1); }
+    100% { color: #ffffff; transform: scale(1.03); }
 }
 
 .system-ok-pulse {
@@ -1438,4 +1458,216 @@ body {
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
     transition: all 0.3s ease;
 }
+
+/* Cabinet Slots Panel */
+.physical-slots-panel {
+    background: #0f172a;
+    border: 3px solid #334155;
+    border-radius: 12px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1.2fr;
+    gap: 10px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.physical-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 8px 3px;
+    position: relative;
+}
+
+.slot-opening-vertical {
+    width: 6px;
+    height: 25px;
+    background: #000000;
+    border-radius: 20px;
+    box-shadow: inset 0 0 5px rgba(0,210,255,0.3);
+    border: 1px solid #475569;
+}
+
+.slot-opening-horizontal {
+    width: 45px;
+    height: 6px;
+    background: #000000;
+    border-radius: 20px;
+    box-shadow: inset 0 0 5px rgba(34,197,94,0.3);
+    border: 1px solid #475569;
+}
+
+.slot-opening-card {
+    width: 45px;
+    height: 8px;
+    background: #000000;
+    border-radius: 2px;
+    border: 1px solid #475569;
+}
+
+.slot-text {
+    font-size: 7px;
+    font-weight: 800;
+    color: var(--color-text-sub);
+    letter-spacing: 0.3px;
+}
+
+/* User Wallet Panel Details */
+.wallet-contents {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wallet-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.coin-stack, .bill-stack {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.wallet-coin-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f1f5f9 0%, #cbd5e1 60%, #94a3b8 100%);
+    border: 2px solid #e2e8f0;
+    color: #334155;
+    font-weight: 800;
+    font-size: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 2px #ffffff;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.wallet-coin-btn:hover {
+    transform: scale(1.08) rotate(15deg);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.4), inset 0 1px 2px #ffffff;
+}
+
+.wallet-coin-btn:active {
+    transform: scale(0.95);
+}
+
+.wallet-bill-btn {
+    flex: 1;
+    height: 38px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #14532d;
+    font-size: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    cursor: pointer;
+    border: 2px solid #065f46;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.bill-one {
+    background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+}
+
+.bill-five {
+    background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%);
+}
+
+.wallet-bill-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+}
+
+.wallet-bill-btn:active {
+    transform: translateY(1px);
+}
+
+.wallet-card-btn {
+    width: 100%;
+    height: 44px;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    border: 2px solid #1d4ed8;
+    border-radius: 8px;
+    color: white;
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.wallet-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(59, 130, 246, 0.4);
+}
+
+.wallet-card-btn:active {
+    transform: translateY(1px);
+}
+
+.card-chip {
+    position: absolute;
+    left: 12px;
+    top: 17px;
+    width: 10px;
+    height: 8px;
+    background: #f59e0b;
+    border-radius: 1px;
+}
+
+/* Flying Currency Particles */
+.moving-coin-particle, .moving-bill-particle, .moving-card-particle {
+    position: absolute;
+    z-index: 9999;
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: white;
+}
+
+.moving-coin-particle {
+    background: radial-gradient(circle, #cbd5e1 0%, #64748b 100%);
+    border: 2px solid #94a3b8;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.moving-bill-particle {
+    background: #059669;
+    border: 2px solid #10b981;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.moving-card-particle {
+    background: #0284c7;
+    border: 2px solid #0ea5e9;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
 
