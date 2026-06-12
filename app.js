@@ -409,7 +409,6 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.sizeVal = null;
         STATE.spigot = false;
         STATE.totalPrice = 0;
-        STATE.amountPaid = 0;
         STATE.isVending = false;
         STATE.vendingProgress = 0;
 
@@ -663,6 +662,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start Vending click event
     btnStartVending.addEventListener('click', () => {
         if (STATE.amountPaid >= STATE.totalPrice) {
+            STATE.amountPaid = Number((STATE.amountPaid - STATE.totalPrice).toFixed(2));
+            updateCreditDisplay();
             navigateTo('screen-vending');
         }
     });
