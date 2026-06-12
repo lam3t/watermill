@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const STATE = {
         currentScreen: 'screen-home',
         product: null,        // 'water' or 'ice'
-        size: null,           // 1, 3, or 5 (gallons)
+        size: null,           // size label (e.g. "5 Gallon" or "20 lb Bag")
+        sizeVal: null,        // numerical size value for math (1, 3, 5)
         spigot: false,        // boolean (5 gallon w/ spigot)
-        pricePerGallon: 0.25, // default
         totalPrice: 0.00,
         amountPaid: 0.00,
         isHygieneNoticeRead: false,
@@ -18,10 +18,27 @@ document.addEventListener('DOMContentLoaded', () => {
         audioContext: null    // Lazy initialized
     };
 
-    const PRICING = {
-        water: 0.25, // per gallon
-        ice: 0.35    // per gallon
-    };
+    const WATER_CATALOG = [
+        { id: 'water-5g', name: '5 Gallon Bottle', sizeVal: 5, price: 1.25, spigot: false, 
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-5g"><path d="M40,20 L60,20 L60,30 L75,40 L75,100 Q75,108 67,108 L33,108 Q25,108 25,100 L25,40 L40,30 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" /><rect x="44" y="10" width="12" height="10" fill="var(--color-primary-blue)" rx="2"/><line x1="30" y1="55" x2="70" y2="55" stroke="#ffffff" stroke-width="2" opacity="0.4" /><line x1="30" y1="70" x2="70" y2="70" stroke="#ffffff" stroke-width="2" opacity="0.4" /><line x1="30" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="2" opacity="0.4" /></svg>` },
+        { id: 'water-5gs', name: '5 Gallon w/ Spigot', sizeVal: 5, price: 1.25, spigot: true, 
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-5gs"><path d="M40,20 L60,20 L60,30 L75,40 L75,100 Q75,108 67,108 L33,108 Q25,108 25,100 L25,40 L40,30 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" /><rect x="44" y="10" width="12" height="10" fill="var(--color-primary-blue)" rx="2"/><line x1="30" y1="55" x2="70" y2="55" stroke="#ffffff" stroke-width="2" opacity="0.4" /><line x1="30" y1="70" x2="70" y2="70" stroke="#ffffff" stroke-width="2" opacity="0.4" /><line x1="30" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="2" opacity="0.4" /><path d="M25,95 L15,95 L15,90 L10,90 L10,100 L15,100 L15,97 L25,97 Z" fill="#cccccc" stroke="#666666" stroke-width="1"/></svg>` },
+        { id: 'water-3g', name: '3 Gallon Bottle', sizeVal: 3, price: 0.75, spigot: false, 
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-3g"><path d="M42,30 L58,30 L58,38 L70,48 L70,100 Q70,106 64,106 L36,106 Q30,106 30,100 L30,48 L42,38 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" /><rect x="45" y="20" width="10" height="10" fill="var(--color-primary-blue)" rx="2"/><line x1="35" y1="60" x2="65" y2="60" stroke="#ffffff" stroke-width="2" opacity="0.4" /><line x1="35" y1="78" x2="65" y2="78" stroke="#ffffff" stroke-width="2" opacity="0.4" /></svg>` },
+        { id: 'water-1g', name: '1 Gallon Jug', sizeVal: 1, price: 0.25, spigot: false, 
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-1g"><path d="M44,45 L56,45 L56,52 L65,60 L65,100 Q65,105 60,105 L40,105 Q35,105 35,100 L35,60 L44,52 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" /><rect x="46" y="37" width="8" height="8" fill="var(--color-primary-blue)" rx="1"/><path d="M57,65 L61,65 L61,85 L57,85 Z" fill="none" stroke="#00a8ff" stroke-width="2" rx="2" /></svg>` }
+    ];
+
+    const ICE_CATALOG = [
+        { id: 'ice-bag', name: 'Ice Bag (20 lbs)', sizeVal: 5, price: 1.75, spigot: false,
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-5g"><path d="M25,30 Q25,20 35,22 Q50,25 65,22 Q75,20 75,30 L80,105 Q80,110 70,110 L30,110 Q20,110 20,105 Z" fill="rgba(240, 253, 255, 0.4)" stroke="#00d2ff" stroke-width="2" /><ellipse cx="50" cy="25" rx="23" ry="5" fill="none" stroke="#00d2ff" stroke-width="2" /><rect x="35" y="45" width="12" height="12" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(15 41 51)"/><rect x="52" y="40" width="14" height="14" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(-10 59 47)"/><rect x="30" y="65" width="15" height="15" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(5 37 72)"/><rect x="48" y="60" width="13" height="13" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(25 54 66)"/><rect x="65" y="55" width="12" height="12" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(-15 71 61)"/><rect x="40" y="80" width="15" height="15" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(-5 47 87)"/><rect x="58" y="78" width="14" height="14" rx="2" fill="rgba(188, 252, 255, 0.8)" stroke="#00c0f0" stroke-width="1" transform="rotate(18 65 85)"/></svg>` },
+        { id: 'ice-cooler', name: 'Personal Cooler', sizeVal: 5, price: 1.75, spigot: false,
+          svg: `<svg viewBox="0 0 120 120" class="bottle-svg size-5g"><rect x="15" y="25" width="90" height="12" rx="3" fill="#ffffff" stroke="#cccccc" stroke-width="1.5" /><rect x="25" y="37" width="70" height="65" rx="5" fill="#ef4444" stroke="#b91c1c" stroke-width="2" /><path d="M15,55 L8,55 L8,65 L15,65" fill="none" stroke="#cccccc" stroke-width="2" stroke-linecap="round" /><path d="M105,55 L112,55 L112,65 L105,65" fill="none" stroke="#cccccc" stroke-width="2" stroke-linecap="round" /><rect x="45" y="37" width="30" height="25" fill="#ffffff" /><rect x="55" y="47" width="10" height="8" rx="1" fill="#334155" /></svg>` },
+        { id: 'ice-bucket', name: '5 Gallon Bucket', sizeVal: 5, price: 1.75, spigot: false,
+          svg: `<svg viewBox="0 0 100 120" class="bottle-svg size-5g"><path d="M22,30 L78,30 L70,105 Q70,110 62,110 L38,110 Q30,110 30,105 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" /><ellipse cx="50" cy="30" rx="28" ry="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5" /><path d="M20,32 C20,10 80,10 80,32" fill="none" stroke="#475569" stroke-width="1.5" /></svg>` },
+        { id: 'ice-smallcooler', name: 'Small Cooler', sizeVal: 1, price: 0.35, spigot: false,
+          svg: `<svg viewBox="0 0 120 120" class="bottle-svg size-3g"><rect x="25" y="35" width="70" height="10" rx="2" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" /><rect x="32" y="45" width="56" height="55" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" /><path d="M60,35 L60,15 L70,15" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" /><path d="M60,15 L35,15" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" /><rect x="55" y="52" width="10" height="8" rx="1" fill="#ffffff" /></svg>` }
+    ];
 
     // --- DOM ELEMENT REFERENCES ---
     const screens = {
@@ -325,13 +342,26 @@ document.addEventListener('DOMContentLoaded', () => {
             targetScreen.classList.add('active');
         }
 
+        // Update Brand Poster Cards in Payment/Vending dynamically
+        const paymentPoster = document.getElementById('payment-brand-poster');
+        const vendingPoster = document.getElementById('vending-brand-poster');
+        if (paymentPoster && vendingPoster) {
+            if (STATE.product === 'ice') {
+                paymentPoster.className = 'brand-poster-card poster-ice';
+                vendingPoster.className = 'brand-poster-card poster-ice';
+            } else {
+                paymentPoster.className = 'brand-poster-card poster-water';
+                vendingPoster.className = 'brand-poster-card poster-water';
+            }
+        }
+
         // Handle enter/exit hooks for screens
         if (screenId === 'screen-home') {
             resetOrderState();
         } else if (screenId === 'screen-container') {
             containerProductTag.textContent = `Product: ${STATE.product.toUpperCase()}`;
-            // Pre-calculate prices shown in catalog based on product type
-            updateCatalogPriceLabels();
+            // Render the catalog items dynamically
+            renderCatalogContainerMenu();
             
             // Show Hygiene Warning if not read in this session
             if (!STATE.isHygieneNoticeRead) {
@@ -344,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             doorLock.textContent = "UNLOCKED";
             doorLock.classList.add('unlocked');
             
-            receiptProductName.textContent = `${STATE.product.toUpperCase()} (${STATE.size} Gallon${STATE.spigot ? ' w/ Spigot' : ''})`;
+            receiptProductName.textContent = `${STATE.product.toUpperCase()} (${STATE.size})`;
             receiptCost.textContent = `$${STATE.totalPrice.toFixed(2)}`;
             updatePaymentScreenBalance();
         } else if (screenId === 'screen-vending') {
@@ -363,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetOrderState() {
         STATE.product = null;
         STATE.size = null;
+        STATE.sizeVal = null;
         STATE.spigot = false;
         STATE.totalPrice = 0;
         STATE.amountPaid = 0;
@@ -390,12 +421,42 @@ document.addEventListener('DOMContentLoaded', () => {
         ctxFluid.clearRect(0, 0, canvasVendFluid.width, canvasVendFluid.height);
     }
 
-    function updateCatalogPriceLabels() {
-        const rate = PRICING[STATE.product];
-        document.getElementById('price-1g').textContent = `$${(rate * 1).toFixed(2)}`;
-        document.getElementById('price-3g').textContent = `$${(rate * 3).toFixed(2)}`;
-        document.getElementById('price-5g').textContent = `$${(rate * 5).toFixed(2)}`;
-        document.getElementById('price-5g-spigot').textContent = `$${(rate * 5).toFixed(2)}`;
+    function renderCatalogContainerMenu() {
+        const catalogGrid = document.getElementById('container-catalog-grid');
+        const list = STATE.product === 'water' ? WATER_CATALOG : ICE_CATALOG;
+        
+        catalogGrid.innerHTML = '';
+        list.forEach(item => {
+            const card = document.createElement('button');
+            card.className = 'container-card';
+            card.setAttribute('data-id', item.id);
+            card.setAttribute('data-size', item.name);
+            card.setAttribute('data-sizeval', item.sizeVal);
+            card.setAttribute('data-price', item.price);
+            card.setAttribute('data-spigot', item.spigot ? 'true' : 'false');
+            
+            card.innerHTML = `
+                <div class="container-visual-wrapper">
+                    ${item.svg}
+                </div>
+                <div class="container-info">
+                    <h4>${item.name}</h4>
+                    <span class="price-badge">$${item.price.toFixed(2)}</span>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                STATE.size = item.name;
+                STATE.sizeVal = item.sizeVal;
+                STATE.spigot = item.spigot;
+                STATE.totalPrice = item.price;
+                
+                placeContainerInKiosk(item.id);
+                navigateTo('screen-payment');
+            });
+            
+            catalogGrid.appendChild(card);
+        });
     }
 
     function updatePaymentScreenBalance() {
@@ -419,42 +480,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- KIOSK CONTAINER GRAPHICS UPDATES ---
-    function placeContainerInKiosk(size, spigot) {
-        // Renders the selected container SVG inside the Left Panel (dispensing bay)
-        let containerMarkup = '';
-        const spigotClass = spigot ? 'has-spigot' : '';
-
-        if (size === 1) {
-            containerMarkup = `
-                <svg viewBox="0 0 100 120" class="bottle-kiosk-svg size-1g ${spigotClass}" style="height: 110px; width: auto;">
-                    <path d="M44,45 L56,45 L56,52 L65,60 L65,100 Q65,105 60,105 L40,105 Q35,105 35,100 L35,60 L44,52 Z" fill="var(--color-bottle-blue)" stroke="#00d2ff" stroke-width="2" />
-                    <rect x="46" y="37" width="8" height="8" fill="var(--color-primary-blue)" rx="1"/>
-                    <path d="M57,65 L61,65 L61,85 L57,85 Z" fill="none" stroke="#00d2ff" stroke-width="2" rx="2" />
-                </svg>
-            `;
-        } else if (size === 3) {
-            containerMarkup = `
-                <svg viewBox="0 0 100 120" class="bottle-kiosk-svg size-3g ${spigotClass}" style="height: 135px; width: auto;">
-                    <path d="M42,30 L58,30 L58,38 L70,48 L70,100 Q70,106 64,106 L36,106 Q30,106 30,100 L30,48 L42,38 Z" fill="var(--color-bottle-blue)" stroke="#00d2ff" stroke-width="2" />
-                    <rect x="45" y="20" width="10" height="10" fill="var(--color-primary-blue)" rx="2"/>
-                    <line x1="35" y1="60" x2="65" y2="60" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
-                    <line x1="35" y1="78" x2="65" y2="78" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
-                </svg>
-            `;
-        } else if (size === 5) {
-            containerMarkup = `
-                <svg viewBox="0 0 100 120" class="bottle-kiosk-svg size-5g ${spigotClass}" style="height: 165px; width: auto;">
-                    <path d="M40,20 L60,20 L60,30 L75,40 L75,100 Q75,108 67,108 L33,108 Q25,108 25,100 L25,40 L40,30 Z" fill="var(--color-bottle-blue)" stroke="#00d2ff" stroke-width="2" />
-                    <rect x="44" y="10" width="12" height="10" fill="var(--color-primary-blue)" rx="2"/>
-                    <line x1="30" y1="55" x2="70" y2="55" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
-                    <line x1="30" y1="70" x2="70" y2="70" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
-                    <line x1="30" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
-                    ${spigot ? `<path d="M25,95 L15,95 L15,90 L10,90 L10,100 L15,100 L15,97 L25,97 Z" fill="#cccccc" stroke="#666666" stroke-width="1"/>` : ''}
-                </svg>
-            `;
+    function placeContainerInKiosk(itemId) {
+        // Find matching item details from catalogs
+        const item = WATER_CATALOG.find(i => i.id === itemId) || ICE_CATALOG.find(i => i.id === itemId);
+        if (item) {
+            // Display item markup in chamber dispensing bay
+            kioskContainerHolder.innerHTML = item.svg;
+            // Adjust kiosk sizes for better presentation scaling
+            const svgEl = kioskContainerHolder.querySelector('svg');
+            if (svgEl) {
+                if (item.sizeVal === 1) {
+                    svgEl.style.height = '110px';
+                } else if (item.sizeVal === 3) {
+                    svgEl.style.height = '130px';
+                } else {
+                    svgEl.style.height = '165px';
+                }
+                svgEl.classList.add('bottle-kiosk-svg');
+            }
         }
-
-        kioskContainerHolder.innerHTML = containerMarkup;
     }
 
 
@@ -502,14 +546,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSelectWater.addEventListener('click', () => {
         initAudio();
         STATE.product = 'water';
-        STATE.pricePerGallon = PRICING.water;
         navigateTo('screen-container');
     });
 
     btnSelectIce.addEventListener('click', () => {
         initAudio();
         STATE.product = 'ice';
-        STATE.pricePerGallon = PRICING.ice;
         navigateTo('screen-container');
     });
 
@@ -518,12 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         STATE.isHygieneNoticeRead = true;
         hygienePopup.classList.remove('active');
     });
-
-    // Select size cards
-    document.querySelectorAll('.container-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const size = parseInt(card.getAttribute('data-size'));
-            const spigot = card.getAttribute('data-spigot') === 'true';
 
             STATE.size = size;
             STATE.spigot = spigot;
@@ -555,14 +591,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ================= ANIMATIONS & SIMULATION ENGINE =================
 
-    // Reverse Osmosis Membrane Simulation (Canvas)
+    // Reverse Osmosis Membrane & Freezer Module Simulation (Canvas)
     let roParticles = [];
     const maxParticles = 65;
+    let freezeProgress = 0; // 0 to 1 for freezing grid animation
 
     function initRoSimulation() {
         const width = canvasRo.width = canvasRo.offsetWidth;
         const height = canvasRo.height = canvasRo.offsetHeight;
         roParticles = [];
+        freezeProgress = 0;
 
         // Seed initial particle batch
         for (let i = 0; i < maxParticles; i++) {
@@ -571,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createRoParticle(canvasWidth, canvasHeight, randomizeX = false) {
-        const isPure = Math.random() > 0.4; // 60% pure water, 40% impurities
+        const isPure = Math.random() > 0.4; // 60% pure, 40% impurities
         
         return {
             x: randomizeX ? Math.random() * (canvasWidth * 0.4) + 10 : 10,
@@ -581,83 +619,129 @@ document.addEventListener('DOMContentLoaded', () => {
             radius: isPure ? Math.random() * 2.5 + 2 : Math.random() * 4 + 4,
             isPure: isPure,
             rejected: false,
-            color: isPure ? '#38bdf8' : '#fb923c' // blue vs orange
+            color: isPure ? '#38bdf8' : '#fb923c'
         };
     }
 
-    function animateRoMembrane() {
+    // Main Canvas animation for Step 5 / Freezer
+    function animateRoOrFreezer(vendingProgress) {
         const ctx = canvasRo.getContext('2d');
         const width = canvasRo.width;
         const height = canvasRo.height;
 
         ctx.clearRect(0, 0, width, height);
 
-        // Draw semi-permeable membrane filter mesh line
-        const membraneX = width * 0.55;
-        ctx.beginPath();
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 6]);
-        ctx.moveTo(membraneX, 0);
-        ctx.lineTo(membraneX, height);
-        ctx.stroke();
-        ctx.setLineDash([]); // reset
+        // Timeline branches: Water vs Ice
+        if (STATE.product === 'water' || (STATE.product === 'ice' && vendingProgress <= 45)) {
+            // STANDARD REVERSE OSMOSIS SCREEN
+            document.getElementById('vending-step-tag').textContent = "Step 5";
+            document.getElementById('vending-step-title').textContent = "Reverse Osmosis Filtration (RO)";
+            
+            // Draw semi-permeable membrane
+            const membraneX = width * 0.55;
+            ctx.beginPath();
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 6]);
+            ctx.moveTo(membraneX, 0);
+            ctx.lineTo(membraneX, height);
+            ctx.stroke();
+            ctx.setLineDash([]); // reset
 
-        // Draw labels/borders
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.fillRect(membraneX - 2, 0, 4, height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.fillRect(membraneX - 2, 0, 4, height);
 
-        roParticles.forEach((p, idx) => {
-            // Update position
-            p.x += p.vx;
-            p.y += p.vy;
+            roParticles.forEach((p, idx) => {
+                p.x += p.vx;
+                p.y += p.vy;
 
-            // Bounce off top/bottom borders
-            if (p.y - p.radius < 0 || p.y + p.radius > height) {
-                p.vy = -p.vy;
-            }
+                if (p.y - p.radius < 0 || p.y + p.radius > height) p.vy = -p.vy;
 
-            // Interactive logic: hitting the membrane
-            if (!p.rejected && p.x + p.radius >= membraneX && p.x - p.radius <= membraneX + 5) {
-                if (p.isPure) {
-                    // Pure water passes through with slight speed reduction
-                    p.vx = Math.abs(p.vx) * 0.85;
-                } else {
-                    // Impurities are rejected! Bounce back and drop down to waste line
-                    p.rejected = true;
-                    p.vx = -Math.abs(p.vx) * 1.2; // bounce away left
-                    p.vy = Math.random() * 2 + 1; // force downward
+                // Hit membrane
+                if (!p.rejected && p.x + p.radius >= membraneX && p.x - p.radius <= membraneX + 5) {
+                    if (p.isPure) {
+                        p.vx = Math.abs(p.vx) * 0.85; // pass
+                    } else {
+                        p.rejected = true;
+                        p.vx = -Math.abs(p.vx) * 1.2; // reject
+                        p.vy = Math.random() * 2 + 1;
+                    }
+                }
+
+                let reset = false;
+                if (p.x > width || (p.rejected && (p.y > height || p.x < 0))) reset = true;
+
+                if (reset) {
+                    roParticles[idx] = createRoParticle(width, height, false);
+                }
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = p.isPure ? 6 : 0;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+        } else if (STATE.product === 'ice' && vendingProgress > 45) {
+            // STANDALONE FREEZER MODULE SCREEN
+            document.getElementById('vending-step-tag').textContent = "Freezer";
+            document.getElementById('vending-step-title').textContent = "Sub-Zero Ice Block Maker Active";
+
+            // Draw a neat freezer grid containing ice mold cells
+            const rows = 3;
+            const cols = 8;
+            const cellSize = 30;
+            const startX = (width - cols * (cellSize + 8)) / 2;
+            const startY = (height - rows * (cellSize + 8)) / 2;
+
+            ctx.fillStyle = '#075985';
+            ctx.font = 'bold 9px var(--font-primary)';
+            ctx.fillText("FREEZER CELL MATRIX - LIQUID SOLIDIFICATION ACTIVE", startX, startY - 10);
+
+            // Increment freeze state
+            freezeProgress = Math.min(1.0, (vendingProgress - 45) / 35); // solidifies up to 80% progress
+
+            // Draw mold grids
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = startX + c * (cellSize + 8);
+                    const y = startY + r * (cellSize + 8);
+
+                    // Grid mold border
+                    ctx.strokeStyle = 'rgba(0, 210, 255, 0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+
+                    // Draw water level freezing inside cell
+                    if (freezeProgress > 0) {
+                        ctx.fillStyle = `rgba(188, 252, 255, ${freezeProgress * 0.8})`;
+                        const fillH = cellSize * freezeProgress;
+                        ctx.fillRect(x + 2, y + cellSize - fillH - 2, cellSize - 4, fillH);
+
+                        if (freezeProgress >= 1.0) {
+                            // Mold highlight glows when frozen solid
+                            ctx.strokeStyle = '#00d2ff';
+                            ctx.strokeRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+                        }
+                    }
                 }
             }
 
-            // Remove particles out of bounds and replace them
-            let resetParticle = false;
-            if (p.x > width) {
-                resetParticle = true;
-            } else if (p.rejected && (p.y > height || p.x < 0)) {
-                resetParticle = true;
+            // Animate ice crystals floating/shaking inside
+            if (vendingProgress > 80) {
+                ctx.fillStyle = 'rgba(0, 210, 255, 0.2)';
+                ctx.fillText("ICE EXTRACTION BLOCK RELEASED", startX, startY + rows * (cellSize + 8) + 12);
             }
+        }
 
-            if (resetParticle) {
-                roParticles[idx] = createRoParticle(width, height, false);
-            }
-
-            // Draw particle
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = p.isPure ? 6 : 0;
-            ctx.fill();
-            ctx.shadowBlur = 0; // reset
-        });
-
-        roAnimationId = requestAnimationFrame(animateRoMembrane);
+        roAnimationId = requestAnimationFrame(() => animateRoOrFreezer(vendingProgress));
     }
 
 
     // --- LIQUID / ICE DISPENSING CHAMBER SIMULATOR ---
-    let fluidLevel = 0; // 0 to 1
+    let fluidLevel = 0;
     let fluidBubbles = [];
     let iceCubes = [];
 
@@ -669,40 +753,45 @@ document.addEventListener('DOMContentLoaded', () => {
         iceCubes = [];
     }
 
-    // Creates rising water splash or falling ice blocks
-    function updateAndDrawVendingFluid(progress) {
+    // Creates rising water splash or falling ice blocks inside kiosk bay
+    function updateAndDrawVendingFluid(vendingProgress) {
         const ctx = canvasVendFluid.getContext('2d');
         const w = canvasVendFluid.width;
         const h = canvasVendFluid.height;
 
         ctx.clearRect(0, 0, w, h);
 
-        // Calculate nozzle coordinates
         const nozzleX = w / 2;
-        const nozzleY = 35; // approximate tip in CSS alignment
+        const nozzleY = 35;
 
-        // Determine container bounding box in canvas coordinate
-        // This box centers roughly inside the lower half
-        const containerH = STATE.size === 5 ? 120 : (STATE.size === 3 ? 100 : 80);
-        const containerW = STATE.size === 5 ? 75 : (STATE.size === 3 ? 65 : 55);
+        // Container sizing parameters
+        let containerH = 120;
+        let containerW = 75;
+        if (STATE.sizeVal === 3) {
+            containerH = 100;
+            containerW = 65;
+        } else if (STATE.sizeVal === 1) {
+            containerH = 80;
+            containerW = 55;
+        }
+
         const containerX = (w - containerW) / 2;
-        const containerY = h - containerH - 12; // bottom margin
+        const containerY = h - containerH - 12;
 
-        // Vending has progress phases
-        if (progress > 30) { // Dispensing phase triggers stream
-            const dispenseProgress = (progress - 30) / 70; // 0 to 1 scaling
+        if (vendingProgress > 30) {
+            const dispenseProgress = (vendingProgress - 30) / 70;
             fluidLevel = dispenseProgress;
 
             if (STATE.product === 'water') {
-                // 1. Draw Stream of Water from nozzle
-                if (progress < 99) {
+                // WATER POUR STREAM
+                if (vendingProgress < 99) {
                     ctx.beginPath();
                     const gradientStream = ctx.createLinearGradient(nozzleX - 4, nozzleY, nozzleX + 4, containerY + containerH * (1 - fluidLevel));
                     gradientStream.addColorStop(0, 'rgba(0, 210, 255, 0.9)');
                     gradientStream.addColorStop(0.5, 'rgba(56, 189, 248, 0.7)');
                     gradientStream.addColorStop(1, 'rgba(0, 210, 255, 0.9)');
                     ctx.fillStyle = gradientStream;
-                    // Slightly wavy water fall stream
+                    
                     ctx.moveTo(nozzleX - 3 + Math.sin(Date.now()*0.05)*1, nozzleY);
                     ctx.lineTo(nozzleX + 3 + Math.sin(Date.now()*0.05)*1, nozzleY);
                     ctx.lineTo(nozzleX + 4, containerY + containerH * (1 - fluidLevel));
@@ -710,32 +799,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.fill();
                 }
 
-                // 2. Draw rising fluid inside container boundaries
+                // RISING WATER LIQUID
                 const currentFluidY = containerY + containerH * (1 - fluidLevel);
-                const currentFluidHeight = containerH * fluidLevel;
 
                 ctx.save();
-                // Clip canvas to the shape of the bottle base to simulate clean inside-filling
                 ctx.beginPath();
-                if (STATE.size === 5) {
-                    ctx.roundRect(containerX, containerY + 20, containerW, containerH - 20, 8);
-                } else if (STATE.size === 3) {
-                    ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
-                } else {
-                    ctx.roundRect(containerX, containerY + 10, containerW, containerH - 10, 5);
-                }
+                ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
                 ctx.clip();
 
-                // Draw Water body
                 ctx.beginPath();
                 ctx.fillStyle = 'rgba(0, 168, 255, 0.45)';
                 ctx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
                 ctx.lineWidth = 2;
 
-                // Create wave effect at water surface
                 ctx.moveTo(containerX, currentFluidY);
                 const waveFreq = 0.05;
-                const waveAmp = progress < 98 ? 3 : 0.5; // calm down at the end
+                const waveAmp = vendingProgress < 98 ? 3 : 0.5;
                 for (let x = containerX; x <= containerX + containerW; x++) {
                     const y = currentFluidY + Math.sin((x + Date.now()*0.15) * waveFreq) * waveAmp;
                     ctx.lineTo(x, y);
@@ -746,8 +825,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.fill();
                 ctx.stroke();
 
-                // Bubbles rising inside container
-                if (progress < 99 && Math.random() > 0.4) {
+                // Rising air bubbles
+                if (vendingProgress < 99 && Math.random() > 0.4) {
                     fluidBubbles.push({
                         x: containerX + Math.random() * containerW,
                         y: containerY + containerH,
@@ -763,21 +842,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
                     ctx.fill();
 
-                    // remove bubble if above water surface
-                    if (b.y < currentFluidY) {
-                        fluidBubbles.splice(idx, 1);
-                    }
+                    if (b.y < currentFluidY) fluidBubbles.splice(idx, 1);
                 });
 
                 ctx.restore();
 
-                // Splashing droplets at surface level
-                if (progress < 99 && Math.random() > 0.3) {
+                // Surface splash particles
+                if (vendingProgress < 99 && Math.random() > 0.3) {
                     for(let i=0; i<3; i++) {
                         fluidBubbles.push({
                             x: nozzleX + (Math.random() * 12 - 6),
                             y: currentFluidY,
-                            vy: -(Math.random() * 3 + 1), // upward splash
+                            vy: -(Math.random() * 3 + 1),
                             vx: Math.random() * 4 - 2,
                             r: Math.random() * 1.5 + 0.5,
                             isSplash: true
@@ -785,64 +861,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Render splashes
                 ctx.fillStyle = '#00d2ff';
                 fluidBubbles.forEach((b, idx) => {
                     if (b.isSplash) {
                         b.y += b.vy;
                         b.x += b.vx;
-                        b.vy += 0.2; // gravity
+                        b.vy += 0.2;
                         ctx.beginPath();
                         ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
                         ctx.fill();
 
-                        if (b.y > containerY + containerH) {
-                            fluidBubbles.splice(idx, 1);
-                        }
+                        if (b.y > containerY + containerH) fluidBubbles.splice(idx, 1);
                     }
                 });
 
             } else if (STATE.product === 'ice') {
-                // Ice Dispensing Mode: Drop 3D cubes into cabinet container
-                const currentFluidY = containerY + containerH * (1 - fluidLevel);
-
-                // Drop a cube periodically during dispensing phase
-                if (progress < 98 && progress % 4 === 0) {
+                // ICE TUMBLING CUBES (Start falling only after freeze phase begins > 45%)
+                if (vendingProgress > 45 && vendingProgress < 98 && vendingProgress % 3 === 0) {
                     iceCubes.push({
-                        x: nozzleX + (Math.random() * 10 - 5),
+                        x: nozzleX + (Math.random() * 8 - 4),
                         y: nozzleY + 5,
-                        vy: 4,
-                        vx: Math.random() * 2 - 1,
-                        size: Math.random() * 6 + 6,
+                        vy: 5.5,
+                        vx: Math.random() * 2.4 - 1.2,
+                        size: Math.random() * 7 + 7,
                         angle: Math.random() * Math.PI,
-                        spin: Math.random() * 0.1 - 0.05,
+                        spin: Math.random() * 0.15 - 0.075,
                         settled: false
                     });
                 }
 
                 ctx.save();
-                // Clip boundary so ice cubes stack neatly inside bottle
                 ctx.beginPath();
-                if (STATE.size === 5) {
-                    ctx.roundRect(containerX, containerY + 20, containerW, containerH - 20, 8);
-                } else if (STATE.size === 3) {
-                    ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
-                } else {
-                    ctx.roundRect(containerX, containerY + 10, containerW, containerH - 10, 5);
-                }
+                ctx.roundRect(containerX, containerY + 15, containerW, containerH - 15, 6);
                 ctx.clip();
 
-                // Draw falling and piling ice blocks
+                // Animate and draw falling and stacking ice cubes
                 iceCubes.forEach(c => {
                     if (!c.settled) {
                         c.y += c.vy;
                         c.x += c.vx;
                         c.angle += c.spin;
 
-                        // Check collision with the bottle bottom pile
                         const bottomLimit = containerY + containerH - (c.size / 2);
-                        // Make height of stack rise as level rises
-                        const stackY = containerY + containerH - (containerH * fluidLevel) + (Math.random() * 10 - 5);
+                        // Scale ice pile height base directly off vending timeline
+                        const icePileLevel = (vendingProgress - 45) / 55;
+                        const stackY = containerY + containerH - (containerH * icePileLevel) + (Math.random() * 12 - 6);
 
                         if (c.y >= stackY || c.y >= bottomLimit) {
                             c.y = Math.min(stackY, bottomLimit);
@@ -853,25 +916,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // Draw Ice Cube shape (Glassy white/cyan square)
                     ctx.save();
                     ctx.translate(c.x, c.y);
                     ctx.rotate(c.angle);
                     
-                    ctx.fillStyle = 'rgba(188, 252, 255, 0.75)';
+                    ctx.fillStyle = 'rgba(215, 252, 255, 0.85)';
                     ctx.strokeStyle = '#00d2ff';
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 1.2;
                     
                     ctx.beginPath();
-                    ctx.roundRect(-c.size/2, -c.size/2, c.size, c.size, 1.5);
+                    ctx.roundRect(-c.size/2, -c.size/2, c.size, c.size, 2);
                     ctx.fill();
                     ctx.stroke();
 
-                    // Reflection line
+                    // Icy sheen line
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffff';
-                    ctx.moveTo(-c.size/4, -c.size/4);
-                    ctx.lineTo(c.size/4, -c.size/4);
+                    ctx.moveTo(-c.size/3, -c.size/3);
+                    ctx.lineTo(c.size/3, -c.size/3);
                     ctx.stroke();
 
                     ctx.restore();
@@ -881,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        vendAnimationId = requestAnimationFrame(() => updateAndDrawVendingFluid(progress));
+        vendAnimationId = requestAnimationFrame(() => updateAndDrawVendingFluid(vendingProgress));
     }
 
     // --- SEQUENCER LOOP FOR STEP 4 ACTIVE STATE ---
@@ -890,18 +952,16 @@ document.addEventListener('DOMContentLoaded', () => {
         vendingProgressFill.style.width = '0%';
         vendingProgressPercent.textContent = '0%';
 
-        // Pulse computer monitoring LED
         ledMonitoring.className = 'led-light led-green flashing';
         ledFailsafe.className = 'led-light led-green flashing';
 
         initRoSimulation();
-        animateRoMembrane();
+        animateRoOrFreezer(progress);
 
         initDispenserSimulation();
         updateAndDrawVendingFluid(progress);
 
-        // Sequence timers
-        const duration = 10000; // 10 seconds total vending process
+        const duration = 10000;
         const intervalTime = 100;
         const increments = duration / intervalTime;
         let step = 0;
@@ -910,7 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
             step++;
             progress = (step / increments) * 100;
             
-            // Limit progress bounds
             if (progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
@@ -919,45 +978,38 @@ document.addEventListener('DOMContentLoaded', () => {
             vendingProgressFill.style.width = `${progress}%`;
             vendingProgressPercent.textContent = `${Math.round(progress)}%`;
 
-            // State changes during progress bar
+            // Sequential actions based on timeline progress
             if (progress <= 30) {
-                // PHASE 1: Self-Cleaning Kiosk Dispenser (UV-Sanitization)
+                // PHASE 1: Dispenser UV self-clean cycles
                 dispenserStatusText.textContent = "Self-Cleaning Dispenser Active";
                 dispenserStatusText.parentElement.style.backgroundColor = "rgba(138, 43, 226, 0.15)";
                 dispenserStatusText.parentElement.style.borderColor = "rgba(138, 43, 226, 0.5)";
                 dispenserStatusText.style.color = "#c084fc";
                 
-                // Activate UV lights inside cabin
                 uvGlow.classList.add('active');
                 sanitizeSpray.classList.add('active');
 
-                // Trigger spray sound once
-                if (step === 1) {
-                    playSanitizeSound();
-                }
+                if (step === 1) playSanitizeSound();
             } else {
-                // PHASE 2: Dispensing Water or Ice
+                // PHASE 2: Main vending flow
                 dispenserStatusText.textContent = "Dispensing Kiosk Quality Approved";
                 dispenserStatusText.parentElement.style.backgroundColor = "rgba(0, 168, 89, 0.15)";
                 dispenserStatusText.parentElement.style.borderColor = "rgba(0, 168, 89, 0.5)";
                 dispenserStatusText.style.color = "#86efac";
 
-                // Turn off UV light sanitizers
                 uvGlow.classList.remove('active');
                 sanitizeSpray.classList.remove('active');
 
-                // Trigger vending sounds
+                // Trigger sounds
                 if (step === Math.ceil(increments * 0.3) + 1) {
                     startVendingSound();
                 }
             }
 
             if (progress >= 100) {
-                // Vending ended
                 stopVendingSound();
                 playCompleteSound();
                 
-                // Stop monitoring flashings
                 ledMonitoring.className = 'led-light led-green';
                 ledFailsafe.className = 'led-light led-green';
 
@@ -986,3 +1038,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
     resetOrderState();
 });
+

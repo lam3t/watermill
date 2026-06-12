@@ -1381,3 +1381,61 @@ body {
 .restart-btn {
     max-width: 300px;
 }
+
+/* Dynamic Brand Poster Banners */
+.brand-poster-card {
+    width: 100%;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.poster-water {
+    background: linear-gradient(135deg, #012b55 0%, #0176b5 100%);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+.poster-water::before {
+    content: "The WATER is Better Here!";
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+.poster-ice {
+    background: linear-gradient(135deg, #082f49 0%, #0369a1 100%);
+    border: 2px solid #00d2ff;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.poster-ice::before {
+    content: "❄️ Pure ICE ❄️";
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+/* Custom interactive styling for the physical dispenser bay containers */
+.bottle-kiosk-svg {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+    transition: all 0.3s ease;
+}
+
