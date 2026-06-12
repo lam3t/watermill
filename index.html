@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watermill Express - Kiosk Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Brand Title Bar -->
+        <header class="brand-header">
+            <div class="logo-container">
+                <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Stylized Watermill/Sun wheel logo matching brand aesthetic -->
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="4" />
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" stroke-dasharray="6 6" stroke-width="2" />
+                    <path d="M 50 10 L 50 90 M 10 50 L 90 50 M 22 22 L 78 78 M 22 78 L 78 22" stroke="currentColor" stroke-width="3" />
+                    <circle cx="50" cy="50" r="12" fill="var(--color-primary-green)" />
+                </svg>
+                <div class="brand-text">
+                    <h1>Watermill <span class="highlight-express">Express</span></h1>
+                    <span class="sub-brand">watermillexpress.com</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <span class="system-ok-pulse"></span> SYSTEM: ONLINE
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="simulator-layout">
+            
+            <!-- LEFT COLUMN: Simulated Physical Kiosk hardware -->
+            <section class="physical-kiosk-panel">
+                <div class="kiosk-cabinet">
+                    <div class="cabinet-header">
+                        <h2>VENDING STATION</h2>
+                        <span class="instruction-label">Place container & insert payment</span>
+                    </div>
+
+                    <!-- Dispensing Bay Chamber -->
+                    <div class="dispensing-bay-outer">
+                        <div class="uv-sanitizer-glow" id="uv-glow"></div>
+                        <div class="dispensing-bay-inner">
+                            <!-- Dispenser Nozzle System -->
+                            <div class="dispenser-nozzle-assembly">
+                                <div class="nozzle-pipe"></div>
+                                <div class="nozzle-tip" id="nozzle-tip">
+                                    <div class="sanitize-spray" id="sanitize-spray"></div>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Vending Container Display Area -->
+                            <div class="vending-area">
+                                <canvas id="canvas-vend-fluid" class="fluid-canvas"></canvas>
+                                <!-- Container representation overlay -->
+                                <div class="container-graphics-container" id="kiosk-container-holder">
+                                    <!-- The container outline will be rendered dynamically with CSS/SVG shapes depending on selected size -->
+                                    <div class="no-container-msg" id="container-placeholder-msg">
+                                        <span>No Container Placed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chamber-door">
+                            <span class="glass-reflection"></span>
+                            <div class="door-lock-indicator" id="door-lock">LOCKED</div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Inputs: Coins / Bills / Card Swipe -->
+                    <div class="payment-hardware">
+                        <h3>Simulated Cash & Card Inputs</h3>
+                        <p class="hardware-hint">Click below to simulate inserting currency or swiping your card</p>
+                        
+                        <div class="coin-acceptor">
+                            <span class="hardware-label">COIN SLOT (Quarters Only)</span>
+                            <button class="hardware-btn coin-btn" id="btn-insert-quarter" title="Insert $0.25">
+                                <span class="coin-icon">25¢</span> Quarter ($0.25)
+                            </button>
+                        </div>
+                        
+                        <div class="bill-acceptor">
+                            <span class="hardware-label">BILL ACCEPTOR ($1.00 & $5.00)</span>
+                            <div class="bill-row">
+                                <button class="hardware-btn bill-btn" id="btn-insert-dollar1" title="Insert $1.00">
+                                    <span class="bill-icon">$1</span> $1.00 Bill
+                                </button>
+                                <button class="hardware-btn bill-btn" id="btn-insert-dollar5" title="Insert $5.00">
+                                    <span class="bill-icon">$5</span> $5.00 Bill
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-reader">
+                            <span class="hardware-label">CREDIT / DEBIT READER</span>
+                            <button class="hardware-btn card-btn" id="btn-swipe-card">
+                                <span class="card-icon">💳</span> Swipe Debit/Credit Card
+                            </button>
+                        </div>
+
+                        <div class="refund-lever-container">
+                            <button class="refund-btn" id="btn-refund">
+                                🪙 Return Inserted Cash
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Simulated Digital Touchscreen Interface -->
+            <section class="touchscreen-panel">
+                <div class="touchscreen-bezel">
+                    <div class="touchscreen-display">
+                        
+                        <!-- ================= SCREEN 1: HOME/IDLE SCREEN ================= -->
+                        <div class="screen active" id="screen-home">
+                            <div class="screen-content home-layout">
+                                <div class="home-hero">
+                                    <h2>Pure Water & Ice</h2>
+                                    <p class="home-sub">Vended into your own containers. Fresh. Clean. Safe.</p>
+                                </div>
+
+                                <!-- Product selection area -->
+                                <div class="product-selector-grid">
+                                    <button class="product-card water-product" id="btn-select-water">
+                                        <div class="product-visual">
+                                            <!-- Pure Water Wave SVG icon -->
+                                            <svg class="product-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <defs>
+                                                    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                        <stop offset="0%" stop-color="#00f2fe" />
+                                                        <stop offset="100%" stop-color="#4facfe" />
+                                                    </linearGradient>
+                                                </defs>
+                                                <path d="M 10 60 Q 25 50, 40 60 T 70 60 T 90 60 L 90 90 L 10 90 Z" fill="url(#waterGrad)" />
+                                                <path d="M 10 70 Q 25 62, 40 70 T 70 70 T 90 70 L 90 90 L 10 90 Z" fill="#0052d4" opacity="0.5" />
+                                                <circle cx="30" cy="40" r="4" fill="#00f2fe" opacity="0.8" />
+                                                <circle cx="50" cy="30" r="6" fill="#00f2fe" opacity="0.6" />
+                                                <circle cx="70" cy="45" r="3" fill="#00f2fe" opacity="0.9" />
+                                            </svg>
+                                        </div>
+                                        <div class="product-label">
+                                            <h3>WATER</h3>
+                                            <span class="product-price">$0.25 / Gallon</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="product-card ice-product" id="btn-select-ice">
+                                        <div class="product-visual">
+                                            <!-- Ice Cube SVG icon -->
+                                            <svg class="product-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="25" y="25" width="40" height="40" rx="6" fill="#bcfcff" stroke="#00d2ff" stroke-width="2" transform="rotate(12 50 50)"/>
+                                                <rect x="45" y="40" width="35" height="35" rx="6" fill="#7bf3ff" stroke="#00c0f0" stroke-width="2" transform="rotate(-15 62 57)" opacity="0.8"/>
+                                                <circle cx="20" cy="80" r="3" fill="#00d2ff"/>
+                                                <circle cx="85" cy="25" r="4" fill="#00d2ff"/>
+                                            </svg>
+                                        </div>
+                                        <div class="product-label">
+                                            <h3>ICE</h3>
+                                            <span class="product-price">$0.35 / Gallon</span>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Quality Commitment Badge -->
+                                <div class="quality-badge-section">
+                                    <div class="guarantee-badge">
+                                        <div class="badge-star-burst">
+                                            <svg viewBox="0 0 100 100" class="badge-svg">
+                                                <polygon points="50,5 61,35 93,35 67,54 77,85 50,65 23,85 33,54 7,35 39,35" fill="var(--color-primary-green)" />
+                                                <circle cx="50" cy="50" r="30" fill="#ffffff" />
+                                                <circle cx="50" cy="50" r="27" fill="none" stroke="var(--color-primary-green)" stroke-width="2" stroke-dasharray="3 2" />
+                                            </svg>
+                                            <div class="badge-inner-text">
+                                                <span class="badge-num">100%</span>
+                                                <span class="badge-lbl">FRESHNESS</span>
+                                            </div>
+                                        </div>
+                                        <span class="guarantee-text">GUARANTEE</span>
+                                    </div>
+                                </div>
+
+                                <!-- Customer Service Footer -->
+                                <footer class="terminal-footer">
+                                    <div class="footer-call">📞 Customer Service: <strong>1.800.487.9643</strong></div>
+                                    <div class="footer-web">🌐 <a href="https://www.watermillexpress.com" target="_blank">www.watermillexpress.com</a></div>
+                                </footer>
+                            </div>
+                        </div>
+
+                        <!-- ================= SCREEN 2: CONTAINER SELECTION SCREEN ================= -->
+                        <div class="screen" id="screen-container">
+                            <div class="screen-content container-layout">
+                                <div class="screen-header">
+                                    <button class="back-btn" id="btn-container-back">← Back</button>
+                                    <h2>Select Your Container Size</h2>
+                                    <div class="selected-product-banner" id="container-screen-product-tag">Product: Water</div>
+                                </div>
+
+                                <!-- Hygiene Warning Overlay (Modal/Popup) -->
+                                <div class="hygiene-popup-overlay" id="hygiene-popup">
+                                    <div class="hygiene-popup-card">
+                                        <div class="warning-header">
+                                            <span class="warning-icon">⚠️</span>
+                                            <h3>HYGIENE NOTICE & WARNING</h3>
+                                        </div>
+                                        <div class="warning-body">
+                                            <p><strong>Recommendation:</strong> Thoroughly rinse any new or existing container before filling.</p>
+                                            <p>For optimal health and water quality, containers should be thoroughly <strong>sanitized at least once every 3 months</strong>.</p>
+                                        </div>
+                                        <button class="action-btn" id="btn-close-hygiene">I Understand & Accept</button>
+                                    </div>
+                                </div>
+
+                                <!-- Container Catalog (Menu) -->
+                                <div class="container-catalog-grid">
+                                    <!-- 5 Gallon -->
+                                    <button class="container-card" data-size="5" data-spigot="false">
+                                        <div class="container-visual-wrapper">
+                                            <svg viewBox="0 0 100 120" class="bottle-svg size-5g">
+                                                <path d="M40,20 L60,20 L60,30 L75,40 L75,100 Q75,108 67,108 L33,108 Q25,108 25,100 L25,40 L40,30 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" />
+                                                <rect x="44" y="10" width="12" height="10" fill="var(--color-primary-blue)" rx="2"/>
+                                                <!-- Grips/Ridges -->
+                                                <line x1="30" y1="55" x2="70" y2="55" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <line x1="30" y1="70" x2="70" y2="70" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <line x1="30" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                            </svg>
+                                        </div>
+                                        <div class="container-info">
+                                            <h4>5 Gallon Bottle</h4>
+                                            <span class="price-badge" id="price-5g">$1.25</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- 5 Gallon w/ Spigot -->
+                                    <button class="container-card" data-size="5" data-spigot="true">
+                                        <div class="container-visual-wrapper">
+                                            <svg viewBox="0 0 100 120" class="bottle-svg size-5gs">
+                                                <path d="M40,20 L60,20 L60,30 L75,40 L75,100 Q75,108 67,108 L33,108 Q25,108 25,100 L25,40 L40,30 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" />
+                                                <rect x="44" y="10" width="12" height="10" fill="var(--color-primary-blue)" rx="2"/>
+                                                <!-- Ridges -->
+                                                <line x1="30" y1="55" x2="70" y2="55" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <line x1="30" y1="70" x2="70" y2="70" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <line x1="30" y1="85" x2="70" y2="85" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <!-- Spigot (Vòi) -->
+                                                <path d="M25,95 L15,95 L15,90 L10,90 L10,100 L15,100 L15,97 L25,97 Z" fill="#cccccc" stroke="#666666" stroke-width="1"/>
+                                            </svg>
+                                        </div>
+                                        <div class="container-info">
+                                            <h4>5 Gallon w/ Spigot</h4>
+                                            <span class="price-badge" id="price-5g-spigot">$1.25</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- 3 Gallon -->
+                                    <button class="container-card" data-size="3" data-spigot="false">
+                                        <div class="container-visual-wrapper">
+                                            <svg viewBox="0 0 100 120" class="bottle-svg size-3g">
+                                                <path d="M42,30 L58,30 L58,38 L70,48 L70,100 Q70,106 64,106 L36,106 Q30,106 30,100 L30,48 L42,38 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" />
+                                                <rect x="45" y="20" width="10" height="10" fill="var(--color-primary-blue)" rx="2"/>
+                                                <!-- Ridges -->
+                                                <line x1="35" y1="60" x2="65" y2="60" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                                <line x1="35" y1="78" x2="65" y2="78" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+                                            </svg>
+                                        </div>
+                                        <div class="container-info">
+                                            <h4>3 Gallon Bottle</h4>
+                                            <span class="price-badge" id="price-3g">$0.75</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- 1 Gallon -->
+                                    <button class="container-card" data-size="1" data-spigot="false">
+                                        <div class="container-visual-wrapper">
+                                            <svg viewBox="0 0 100 120" class="bottle-svg size-1g">
+                                                <path d="M44,45 L56,45 L56,52 L65,60 L65,100 Q65,105 60,105 L40,105 Q35,105 35,100 L35,60 L44,52 Z" fill="var(--color-bottle-blue)" stroke="#00a8ff" stroke-width="2" />
+                                                <rect x="46" y="37" width="8" height="8" fill="var(--color-primary-blue)" rx="1"/>
+                                                <!-- Handle outline -->
+                                                <path d="M57,65 L61,65 L61,85 L57,85 Z" fill="none" stroke="#00a8ff" stroke-width="2" rx="2" />
+                                            </svg>
+                                        </div>
+                                        <div class="container-info">
+                                            <h4>1 Gallon Jug</h4>
+                                            <span class="price-badge" id="price-1g">$0.25</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ================= SCREEN 3: PAYMENT / ACTIVATION SCREEN ================= -->
+                        <div class="screen" id="screen-payment">
+                            <div class="screen-content payment-layout">
+                                <div class="screen-header">
+                                    <button class="back-btn" id="btn-payment-back">← Back</button>
+                                    <h2>Payment details</h2>
+                                </div>
+
+                                <div class="payment-receipt-box">
+                                    <div class="receipt-row">
+                                        <span class="receipt-label">Selected Item:</span>
+                                        <strong id="receipt-product-name">Water (5 Gallon)</strong>
+                                    </div>
+                                    <div class="receipt-divider"></div>
+                                    <div class="receipt-row total-row">
+                                        <span class="receipt-label">Total Due:</span>
+                                        <span class="receipt-val price-highlight" id="receipt-cost">$1.25</span>
+                                    </div>
+                                </div>
+
+                                <div class="payment-status-board">
+                                    <div class="credit-status-display">
+                                        <div class="credit-block">
+                                            <span class="mini-label">AMOUNT INSERTED</span>
+                                            <div class="cash-value inserted-value" id="val-amount-paid">$0.00</div>
+                                        </div>
+                                        <div class="credit-block">
+                                            <span class="mini-label">BALANCE REMAINING</span>
+                                            <div class="cash-value remaining-value" id="val-amount-due">$1.25</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="vending-prompt-container">
+                                        <div class="instruction-alert" id="payment-prompt-msg">
+                                            <span class="alert-icon">💳</span>
+                                            <span>Please insert cash or swipe card using the physical panel inputs.</span>
+                                        </div>
+                                        
+                                        <!-- Huge activation button -->
+                                        <button class="start-vending-btn" id="btn-start-vending" disabled>
+                                            <span class="btn-ripple"></span>
+                                            <span class="btn-text">START VENDING</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ================= SCREEN 4: VENDING & SYSTEM DASHBOARD SCREEN ================= -->
+                        <div class="screen" id="screen-vending">
+                            <div class="screen-content vending-layout">
+                                <div class="vending-status-header">
+                                    <h2>Vending in progress...</h2>
+                                    <div class="active-dispenser-tag">
+                                        <span class="dispenser-icon-pulsing"></span>
+                                        <span id="dispenser-status-text">Self-Cleaning Dispenser Active</span>
+                                    </div>
+                                </div>
+
+                                <!-- Progress indicators -->
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" id="vending-progress-fill" style="width: 0%;"></div>
+                                    <span class="progress-percentage-label" id="vending-progress-percent">0%</span>
+                                </div>
+
+                                <!-- 12-Step Perfection & Reverse Osmosis animation -->
+                                <div class="perfection-program-panel">
+                                    <div class="section-title">
+                                        <span class="step-num">Step 5</span>
+                                        <h3>Reverse Osmosis Filtration (RO)</h3>
+                                    </div>
+                                    <div class="ro-visualization">
+                                        <!-- RO filter canvas particle stream -->
+                                        <canvas id="canvas-ro" width="460" height="150"></canvas>
+                                        
+                                        <div class="ro-labels">
+                                            <span class="ro-label tap-label">Tap Water</span>
+                                            <span class="ro-label membrane-label">Semi-Permeable Membrane</span>
+                                            <span class="ro-label pure-label">Pure Water</span>
+                                            <span class="ro-label waste-label">Rejected Impurities</span>
+                                        </div>
+                                    </div>
+                                    <p class="filtration-description">
+                                        Water is pressurized through a semi-permeable membrane at molecular scale, filtering out heavy metals, bacteria, chlorine, and salts to produce high purity water.
+                                    </p>
+                                </div>
+
+                                <!-- Monitoring Dashboard Panel -->
+                                <div class="monitoring-dashboard-grid">
+                                    <div class="monitor-card" id="card-monitor-24h">
+                                        <div class="monitor-indicator">
+                                            <span class="led-light led-green flashing" id="led-monitoring"></span>
+                                            <h4>24-Hour Computer Monitoring</h4>
+                                        </div>
+                                        <p class="monitor-detail">Internal diagnostic system scanning system operations and telemetry 24/7.</p>
+                                    </div>
+
+                                    <div class="monitor-card" id="card-monitor-failsafe">
+                                        <div class="monitor-indicator">
+                                            <span class="led-light led-green" id="led-failsafe"></span>
+                                            <h4>Fail-Safe™ Shut-Down System</h4>
+                                        </div>
+                                        <p class="monitor-detail">Automatic monitoring blocks dispenser if water parameters deviate from absolute purity standards.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ================= SCREEN 5: COMPLETION SCREEN ================= -->
+                        <div class="screen" id="screen-complete">
+                            <div class="screen-content complete-layout">
+                                <div class="completion-hero">
+                                    <div class="success-check-badge">
+                                        <svg viewBox="0 0 100 100" class="check-svg">
+                                            <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-primary-green)" stroke-width="5" />
+                                            <path d="M 30 50 L 45 65 L 70 35" fill="none" stroke="var(--color-primary-green)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <h2>Transaction Complete!</h2>
+                                    <p class="complete-sub">Your fresh <span id="complete-product-type">Water</span> is ready. Please retrieve your container.</p>
+                                </div>
+
+                                <div class="completion-footer-info">
+                                    <!-- Service Log / Cleaned Daily badge -->
+                                    <div class="daily-service-badge">
+                                        <div class="service-icon">🪛</div>
+                                        <div class="service-text">
+                                            <h4>Daily Service Kiosk</h4>
+                                            <p>This station is maintained, tested, and filters replaced daily by certified service technicians.</p>
+                                            <span class="cleaned-tag">✓ I'm Cleaned Daily</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="auto-reset-indicator">
+                                        Returning to Home screen in <strong id="reset-seconds">15</strong> seconds...
+                                    </div>
+
+                                    <button class="action-btn restart-btn" id="btn-complete-restart">Finish & Start New Order</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
